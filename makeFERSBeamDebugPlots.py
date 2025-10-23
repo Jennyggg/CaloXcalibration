@@ -10,23 +10,23 @@ from utils.fitter import eventFit
 from utils.colors import colors
 from runconfig import runNumber, firstEvent, lastEvent, beamEnergy
 from sklearn.linear_model import LinearRegression
-from selections.selections import vetoMuonCounter, applyUpstreamVeto, PSDSelection
+from selections.selections import vetoMuonCounter, applyUpstreamVeto, PSDSelection,applyCC1Selection,applyPSDSelection
 import json
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-FERS_energe_sum_range = [170000,220000]
+FERS_energe_sum_range = [0,200000]
 
 sys.path.append("CMSPLOTS")  # noqa
 ROOT.ROOT.EnableImplicitMT(10)
 ROOT.gROOT.SetBatch(True)  # Disable interactive mode for batch processing
 ROOT.gSystem.Load("utils/functions_cc.so")  # Load the compiled C++ functions
 
-runPedestal = 1259
+runPedestal = 1374
 with open(f"results/root/Run{runPedestal}/testbeam_pedestal.json", "r") as f:
     pedestal = json.load(f)
-HGLG_json_dir = f"results/root/positroncali/"
+HGLG_json_dir = f"results/root/positroncali_round2/"
 with open(f"{HGLG_json_dir}/testbeam_FERS_HG_to_LG_factors.json", "r") as f:
     factors_HG_to_LG = json.load(f)
 
@@ -42,8 +42,10 @@ FERSBoards = buildFERSBoards(run=runNumber)
 rdf, _ = loadRDF(runNumber, firstEvent, lastEvent)
 rdf = preProcessDRSBoards(rdf)
 rdf, _ = vetoMuonCounter(rdf, TSmin=400, TSmax=700, cut=-30)
-rdf, _ = applyUpstreamVeto(rdf, runNumber)
-rdf, _ = PSDSelection(rdf, runNumber, isHadron=False)
+rdf,_ = applyPSDSelection(rdf, runNumber, applyCut=True)
+rdf,_ = applyCC1Selection(rdf, runNumber, applyCut=True)
+#rdf, _ = applyUpstreamVeto(rdf, runNumber)
+#rdf, _ = PSDSelection(rdf, runNumber, isHadron=False)
 rdf = vectorizeFERS(rdf, FERSBoards)
 rdf = subtractFERSBeamPedestal(rdf, FERSBoards, pedestal)
 rdf = correctFERSSaturation(rdf,FERSBoards, factors_HG_to_LG)

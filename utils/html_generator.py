@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
-from backports.zoneinfo import ZoneInfo
-
+import zoneinfo
+from zoneinfo import ZoneInfo
 
 def generate_html(png_files, png_dir, plots_per_row=4, output_html="view_plots.html"):
     """

@@ -143,7 +143,7 @@ def buildFERSBoards(run=316):
 
         FERSBoards["Board3"].MoveTo(-1.5, 1.875)
         FERSBoards["Board11"].MoveTo(0.5, 1.875)
-    elif run >= 1173:
+    elif run >= 1173 and run < 1327:
         # test beam
         FERSBoards["Board0"] = base_FERSBoard_6mm.copy(boardNo=0)
         FERSBoards["Board1"] = base_FERSBoard_6mm.copy(boardNo=1)
@@ -176,7 +176,39 @@ def buildFERSBoards(run=316):
 
         FERSBoards["Board7"].MoveTo(-1.5, 1.875)
         FERSBoards["Board8"].MoveTo(0.5, 1.875)
+    elif run >= 1342:
+        FERSBoards["Board2"] = base_FERSBoard_6mm.copy(boardNo=2)
+        FERSBoards["Board3"] = base_FERSBoard_6mm.copy(boardNo=3)
+        FERSBoards["Board4"] = base_FERSBoard_6mm.copy(boardNo=4)
+        FERSBoards["Board5"] = base_FERSBoard_6mm.copy(boardNo=5)
+        FERSBoards["Board6"] = base_FERSBoard_6mm.copy(boardNo=6)
+        FERSBoards["Board7"] = base_FERSBoard_6mm.copy(boardNo=7)
+        FERSBoards["Board8"] = base_FERSBoard_6mm.copy(boardNo=8)
+        FERSBoards["Board11"] = base_FERSBoard_6mm.copy(boardNo=11)
+        FERSBoards["Board12"] = base_FERSBoard_6mm.copy(boardNo=12)
+        FERSBoards["Board13"] = base_FERSBoard_6mm.copy(boardNo=13)
+        FERSBoards["Board14"] = base_FERSBoard_6mm.copy(boardNo=14)
+        FERSBoards["Board15"] = base_FERSBoard_6mm.copy(boardNo=15)
 
+        FERSBoards["Board9"] = base_FERSBoard_3mm.copy(boardNo=9)
+        FERSBoards["Board10"] = base_FERSBoard_3mm.copy(boardNo=10)
+
+        FERSBoards["Board2"].MoveTo(-13.5, 3.5)
+        FERSBoards["Board3"].MoveTo(-9.5, 7.5)
+        FERSBoards["Board4"].MoveTo(-5.5, 7.5)
+        FERSBoards["Board5"].MoveTo(-1.5, 9.5)
+        FERSBoards["Board6"].MoveTo(2.5, 7.5)
+        FERSBoards["Board7"].MoveTo(6.5, 7.5)
+        FERSBoards["Board8"].MoveTo(10.5, 3.5)
+        FERSBoards["Board11"].MoveTo(-9.5, -0.5)
+        FERSBoards["Board12"].MoveTo(-5.5, -0.5)
+        FERSBoards["Board13"].MoveTo(-1.5, -2.5)
+        FERSBoards["Board14"].MoveTo(2.5, -0.5)
+        FERSBoards["Board15"].MoveTo(6.5, -0.5)
+
+        # 3mm
+        FERSBoards["Board9"].MoveTo(-1.5, 1.875)
+        FERSBoards["Board10"].MoveTo(0.5, 1.875)
     else:
         raise ValueError(f"Unsupported run number {run} for FERS boards.")
     return FERSBoards
@@ -279,6 +311,7 @@ def buildDRSBoards(run=316):
         DRSBoards["Board4"] = buildDRSBoardTestBeam(boardNo=4)
         DRSBoards["Board5"] = buildDRSBoardTestBeam(boardNo=5)
         DRSBoards["Board6"] = buildDRSBoardTestBeam(boardNo=6)
+
     else:
         raise ValueError(f"Unsupported run number {run} for DRS boards.")
     return DRSBoards
@@ -661,8 +694,10 @@ def getUpstreamVetoChannel(run=1184):
 def getDownStreamMuonChannel(run=1184):
     if run < 1183:
         return None
-    else:
+    elif run < 1327:
         return "DRS_Board7_Group1_Channel0"
+    else:
+        return "DRS_Board7_Group2_Channel4"
 
 def getPreShowerChannel(run=1184):
     """
@@ -718,6 +753,12 @@ def getServiceDRSChannels(run=1184):
             "DRS_Board7_Group1_Channel7",
             "DRS_Board7_Group2_Channel0",
             "DRS_Board7_Group2_Channel1",
+            "DRS_Board7_Group2_Channel2",
+            "DRS_Board7_Group2_Channel3",
+            "DRS_Board7_Group2_Channel4",
+            "DRS_Board7_Group2_Channel5",
+            "DRS_Board7_Group2_Channel6",
+            "DRS_Board7_Group2_Channel7",
         ]
 def getCerenkovCounters(run=1184):
     """
@@ -725,12 +766,18 @@ def getCerenkovCounters(run=1184):
     """
     if run < 1183:
         return []
-    else:
+    elif run < 1327:
         return [
             "DRS_Board7_Group1_Channel2",
             "DRS_Board7_Group1_Channel3",
             "DRS_Board7_Group1_Channel4",
             "DRS_Board7_Group1_Channel5",
+        ]
+    else:
+        return [
+            "DRS_Board7_Group2_Channel5",
+            "DRS_Board7_Group2_Channel6",
+            "DRS_Board7_Group2_Channel7",
         ]
 
 

@@ -32,7 +32,7 @@ for _, FERSBoard in FERSBoards.items():
         sTowerX = number2string(iTowerX)
         sTowerY = number2string(iTowerY)
         for var in ["Cer", "Sci"]:
-            hname = f"hist_FERS_Board{FERSBoard.boardNo}_{var}_{sTowerX}_{sTowerY}"
+            hname = f"hist_FERS_Board{FERSBoard.boardNo}_{var}_{sTowerX}_{sTowerY}_HG"
             chan = FERSBoard.GetChannelByTower(
                 iTowerX, iTowerY, isCer=(var == "Cer"))
             if chan is None:

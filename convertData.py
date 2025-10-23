@@ -1,8 +1,8 @@
 import ROOT
 import array
 
-input_file = "/Users/jinweijie/Documents/Postdoc/CaloX/CaloXDataAnalysis/run1259_small.root"
-output_file = "/Users/jinweijie/Documents/Postdoc/CaloX/CaloXDataAnalysis/run1259_small_converted.root"
+input_file = "/lustre/work/jweijie/testbeam_round2/run1358_250924182300.root"
+output_file = "/lustre/work/jweijie/testbeam_round2/run1358_250924182300_converted.root"
 
 def convertROOT(input_file, output_file):
     if output_file is None:

@@ -7,12 +7,53 @@ from utils.html_generator import generate_html
 from utils.fitter import eventFit
 from utils.colors import colors
 from runconfig import runNumber, firstEvent, lastEvent, beamEnergy
-from selections.selections import vetoMuonCounter, applyUpstreamVeto, PSDSelection
+from selections.selections import vetoMuonCounter, applyUpstreamVeto, PSDSelection,applyCC1Selection,applyCC2Selection,applyCC3Selection,applyPSDSelection
 import json
 
 sys.path.append("CMSPLOTS")  # noqa
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--muonveto',
+                    action='store_true')          
+parser.add_argument('--holeveto',
+                    action='store_true')
+parser.add_argument('--PSD',
+                    action='store_true')
+parser.add_argument('--CC1',
+                    action='store_true')
+parser.add_argument('--CC2',
+                    action='store_true')
+parser.add_argument('--CC3',
+                    action='store_true')                                                     
+parser.add_argument('--isHadron',
+                    action='store_true') 
+args = parser.parse_args()
+isHadron = args.isHadron
+filter_suffix = ""
+if args.muonveto:
+    filter_suffix += "_muonveto"
+if args.holeveto:
+    filter_suffix += "_holeveto"
+if args.PSD:
+    filter_suffix += "_passPSD"
+if args.CC1:
+    if isHadron:
+        filter_suffix += "_failCC1"
+    else:
+        filter_suffix += "_passCC1"
+if args.CC2:
+    if isHadron:
+        filter_suffix += "_failCC2"
+    else:
+        filter_suffix += "_passCC2"
+if args.CC3:
+    if isHadron:
+        filter_suffix += "_failCC3"
+    else:
+        filter_suffix += "_passCC3"        
+if filter_suffix == "": filter_suffix = "_wofilter"
 
-runPedestal = 1259
+runPedestal = 1374
 print("Start running FERS beam energy calibration")
 plotdir = f"results/plots/Run{runNumber}/"
 output_json_dir = f"results/root/Run{runNumber}/"
@@ -27,17 +68,62 @@ ROOT.gSystem.Load("utils/functions_cc.so")  # Load the compiled C++ functions
 
 with open(f"results/root/Run{runPedestal}/testbeam_pedestal.json", "r") as f:
     pedestal = json.load(f)
-HGLG_json_dir = f"results/root/positroncali/"
+HGLG_json_dir = f"results/root/positroncali_round2/"
 with open(f"{HGLG_json_dir}/testbeam_FERS_HG_to_LG_factors.json", "r") as f:
     factors_HG_to_LG = json.load(f)
 
 FERSBoards = buildFERSBoards(run=runNumber)
 rdf, _ = loadRDF(runNumber, firstEvent, lastEvent)
 rdf = preProcessDRSBoards(rdf)
-rdf, rdf_prefilter = vetoMuonCounter(rdf, TSmin=400, TSmax=700, cut=-30)
 
-rdf, rdf_filterveto = applyUpstreamVeto(rdf, runNumber)
-rdf, rdf_psd = PSDSelection(rdf, runNumber, isHadron=False)
+if args.muonveto:
+    rdf, rdf_prefilter = vetoMuonCounter(rdf, TSmin=400, TSmax=700, cut=-30)
+if args.holeveto:
+    rdf, rdf_filterveto = applyUpstreamVeto(rdf, runNumber)
+if args.PSD:
+    rdf = applyPSDSelection(rdf, runNumber, applyCut=False)
+    if isHadron:
+        str_psd = "pass_PSDEle_selection == 0"
+    else:
+        str_psd = "pass_PSDEle_selection == 1"
+
+    rdf = rdf.Filter(str_psd)
+    print("select events "+str_psd)
+    print(
+    f"Events after PSD selection: {rdf.Count().GetValue()}")
+if args.CC1:
+    rdf = applyCC1Selection(rdf, runNumber, applyCut=False)
+    if isHadron:
+        str_cc1 = "pass_CC1Ele_selection == 0"
+    else:
+        str_cc1 = "pass_CC1Ele_selection == 1"
+    rdf = rdf.Filter(str_cc1)
+    print("select events "+str_cc1)
+    print(
+    f"Events after CC1 selection: {rdf.Count().GetValue()}")
+if args.CC2:
+    rdf = applyCC2Selection(rdf, runNumber, applyCut=False)
+    if isHadron:
+        str_cc2 = "pass_CC2Ele_selection == 0"
+    else:
+        str_cc2 = "pass_CC2Ele_selection == 1"
+    rdf = rdf.Filter(str_cc2)
+    print("select events "+str_cc2)
+    print(
+    f"Events after CC2 selection: {rdf.Count().GetValue()}")
+if args.CC3:
+    rdf = applyCC3Selection(rdf, runNumber, applyCut=False)
+    if isHadron:
+        str_cc3 = "pass_CC3Ele_selection == 0"
+    else:
+        str_cc3 = "pass_CC3Ele_selection == 1"
+    rdf = rdf.Filter(str_cc3)
+    print("select events "+str_cc3)
+    print(
+    f"Events after CC3 selection: {rdf.Count().GetValue()}")
+
+
+
 rdf = vectorizeFERS(rdf, FERSBoards)
 rdf = subtractFERSBeamPedestal(rdf, FERSBoards, pedestal)
 rdf = correctFERSSaturation(rdf,FERSBoards, factors_HG_to_LG)
@@ -56,19 +142,19 @@ hist_CerEnergyHG = rdf.Histo1D((
 hist_SciEnergyHG = rdf.Histo1D((
     f"hist_FERS_SciEnergyHG_subtracted_saturationcorrected",
     "FERS - SCI Energy HG;SCI Energy HG;Counts",
-    500, -10000, 3e6),
+    500, -10000, 5e5),
     f"FERS_SciEnergyHG_subtracted_saturationcorrected"
     )
 hist_CerEnergyLG = rdf.Histo1D((
     f"hist_FERS_CerEnergyLG_subtracted",
     "FERS - CER Energy LG;CER Energy LG;Counts",
-    500, -1000, 3e4),
+    500, -2000, 5000),
     f"FERS_CerEnergyLG_subtracted"
     )
 hist_SciEnergyLG = rdf.Histo1D((
     f"hist_FERS_SciEnergyLG_subtracted",
     "FERS - SCI Energy LG;SCI Energy LG;Counts",
-    500, -1000, 1e5),
+    500, -1000, 2e4),
     f"FERS_SciEnergyLG_subtracted"
     )
 
@@ -110,23 +196,23 @@ hist_SciEnergyLG = rdf.Histo1D((
 #LG_fit_width_Sci = 2500
 
 
-HG_fitrange_Cer = [70000,100000]
-HG_fitrange_Sci = [1000000,2000000]
+HG_fitrange_Cer = [20000,50000]
+HG_fitrange_Sci = [60000,150000]
 HG_fit_amp_Cer = 350
-HG_fit_mean_Cer = 80000
+HG_fit_mean_Cer = 40000
 HG_fit_width_Cer = 5000
 HG_fit_amp_Sci = 60
-HG_fit_mean_Sci = 1500000
-HG_fit_width_Sci = 50000
+HG_fit_mean_Sci = 10000
+HG_fit_width_Sci = 5000
 
-LG_fitrange_Cer = [5000,10000]
-LG_fitrange_Sci = [20000,40000]
+LG_fitrange_Cer = [1000,2000]
+LG_fitrange_Sci = [1000,5000]
 LG_fit_amp_Cer = 350
-LG_fit_mean_Cer = 7000
-LG_fit_width_Cer = 1000
+LG_fit_mean_Cer = 1500
+LG_fit_width_Cer = 100
 LG_fit_amp_Sci = 60
-LG_fit_mean_Sci = 30000
-LG_fit_width_Sci = 2500
+LG_fit_mean_Sci = 4000
+LG_fit_width_Sci = 100
 
 #fitrange_Cer = [30000,40000]
 #fitrange_Sci = [500000,700000]
@@ -147,7 +233,7 @@ for gain,var,fitrange,amp,mean,width,hist in zip(["HG","HG","LG","LG"],["Cer","S
     c = ROOT.TCanvas()
     hist.Draw()
     fit_func.Draw("same")
-    c.SaveAs(f"{plotdir}/fit_energysum_{gain}_{var}.pdf")
+    c.SaveAs(f"{plotdir}/fit_energysum_{gain}_{var}{filter_suffix}.pdf")
     if gain == "HG":
         fit_dic_HG[f"amp_s_{var}"] = fit_func.GetParameter(0)
         fit_dic_HG[f"mean_s_{var}"] = fit_func.GetParameter(1)
@@ -161,9 +247,9 @@ for gain,var,fitrange,amp,mean,width,hist in zip(["HG","HG","LG","LG"],["Cer","S
 
 if not os.path.exists(output_json_dir):
     os.makedirs(output_json_dir)
-with open(f"{output_json_dir}/testbeam_energy_sum_fit.json", "w") as f:
+with open(f"{output_json_dir}/testbeam_energy_sum_fit{filter_suffix}.json", "w") as f:
     json.dump(fit_dic_HG, f, indent=4)
-with open(f"{output_json_dir}/testbeam_energy_sum_fit_LG.json", "w") as f:
+with open(f"{output_json_dir}/testbeam_energy_sum_fit_LG{filter_suffix}.json", "w") as f:
     json.dump(fit_dic_LG, f, indent=4)
 
 #caliFactors,_ = calibrateFERSChannelsBeam(rdf, FERSBoards, beamEnergy,rangeLow = firstEvent, rangeHigh=lastEvent)

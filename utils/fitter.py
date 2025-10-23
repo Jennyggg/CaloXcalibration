@@ -23,8 +23,8 @@ def channelFit(hist, outdir, outname, npe_max=3, is3mm=False, runNumber=None):
     # --------------------------
     if is3mm:
         mu0_guess = 145.0
-        dpe_guess = 140.0
-        dpe_min = 100
+        dpe_guess = 100.0
+        dpe_min = 50
         dpe_max = 170
         sigma_guess = 20.0
     else:

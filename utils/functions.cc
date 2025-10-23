@@ -10,10 +10,19 @@
 #include "TGraph.h"
 #include "TLine.h"
 #include "TAxis.h"
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #include <iterator>
+#include <fstream> // Required for ifstream
+#include <string>
 using namespace std;
-namespace fs = std::experimental::filesystem;
+//namespace fs = std::experimental::filesystem;
+using namespace ROOT::VecOps;
+extern "C" {
+bool fileExists(const std::string& filename) {
+    std::ifstream file(filename);
+    return file.good(); // Returns true if the file was successfully opened
+}
+//namespace fs = std::experimental::filesystem;
 ROOT::RVec<int> FillIndices(size_t n)
 {
     ROOT::RVec<int> out(n);
@@ -65,6 +74,8 @@ float SumRange(const ROOT::VecOps::RVec<float> &v, size_t i, size_t j)
     return std::accumulate(v.begin() + i, v.begin() + j, 0.0f);
 }
 
+
+
 float MaxRange(const ROOT::VecOps::RVec<float> &v, size_t i, size_t j)
 {
     if (i >= v.size() || j > v.size() || i >= j)
@@ -101,6 +112,16 @@ size_t ArgMaxRange(const ROOT::VecOps::RVec<float> &v, size_t i, size_t j, float
     if (*maxIt < threshold)
         return -1; // return -1 if the maximum value is below the threshold
     return std::distance(v.begin(), maxIt);
+}
+
+float SumRangeWindowMin(const ROOT::VecOps::RVec<float> &v, size_t i, size_t j,size_t w)
+{
+    if (i >= v.size() || j > v.size() || i >= j)
+        return 0.0;
+    size_t peak = ArgMinRange(v, i, j);
+    size_t integral_start = std::max(0,static_cast<int>(peak-w));
+    size_t integral_end = std::min(static_cast<int>(peak+w),static_cast<int>(v.size()));
+    return std::accumulate(v.begin() + integral_start, v.begin() + integral_end, 0.0f);
 }
 
 unsigned int GetIdxFirstCross(float value, ROOT::RVec<float> v, unsigned int i_st, int direction) 
@@ -341,8 +362,9 @@ float fit_riseT(ROOT::RVec<float> vec, float fraction_amplitude, unsigned int PL
         c->SetGrid();
         unsigned int ifile = 0;
         std::string plot_name_modify = plot_name + "_" + std::to_string(ifile) + ".png";
-        fs::path plot_path = plot_name_modify; 
-        while(fs::exists(plot_path)){
+        std::string plot_path = plot_name_modify;
+        //while(std::filesystem::exists(plot_path)){
+	while(fileExists(plot_path)){
             ifile++;
             plot_name_modify = plot_name + "_" + std::to_string(ifile) + ".png";
             plot_path = plot_name_modify;
@@ -394,4 +416,5 @@ size_t compute_peakT(ROOT::RVec<float> vec, int polarity = 1) {
         return std::distance(vec.begin(),std::max_element(vec.begin(), vec.end()));
     else
         return std::distance(vec.begin(),std::min_element(vec.begin(), vec.end()));
+}
 }
